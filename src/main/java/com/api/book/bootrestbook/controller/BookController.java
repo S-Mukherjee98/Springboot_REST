@@ -2,8 +2,12 @@ package com.api.book.bootrestbook.controller;
 
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,36 +27,69 @@ public class BookController {
 
     //Get all books handler
     @GetMapping("/book")
-    public List<Book> getBooks(){
+    public ResponseEntity<List<Book>> getBooks(){
 
-        return this.bookServices.getAllBook();
+        List<Book> list=  this.bookServices.getAllBook();
+        if (list.size()<1) {
+          return ResponseEntity.status(HttpStatus.NOT_FOUND).build();  
+        }
+        return ResponseEntity.of(Optional.of(list));
     }
 
     //get book by id handler
     @GetMapping("/book/{id}")
-    public Book getBook(@PathVariable("id") int id){
+    public ResponseEntity<Book> getBook(@PathVariable("id") int id){
 
-        return bookServices.getBookById(id);
+        Book book=bookServices.getBookById(id);
+        if (book==null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        return ResponseEntity.of(Optional.of(book));
     }
 
     //adding new book handler
     @PostMapping("/book")
-    public Book addBook(@RequestBody Book b){
-        this.bookServices.addBook(b);
-        return b;
+    public ResponseEntity<Book> addBook(@RequestBody Book b){
+        Book book=null;
+        try {
+            book=this.bookServices.addBook(b);
+            return ResponseEntity.of(Optional.of(book));
+        } catch (Exception e) {
+            // TODO: handle exception
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+        
+     
     }
 
     //delete book handler
     @DeleteMapping("/book/{bookid}")
-    public void deleteBook(@PathVariable("bookid") int bookid){
-        this.bookServices.deleteBook(bookid);
+    public ResponseEntity <Void> deleteBook(@PathVariable("bookid") int bookid){
+        try {
+            this.bookServices.deleteBook(bookid);
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        } catch (Exception e) {
+            // TODO: handle exception
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+        
 
     }
 
     //update book handler
     @PutMapping("/book/{id}")
-    public Book updateBook(@RequestBody Book book,@PathVariable("id") int bid){
-        this.bookServices.updateBook(book,bid);
-        return book;
+    public ResponseEntity<Book> updateBook(@RequestBody Book book,@PathVariable("id") int bid){
+
+        try {
+            this.bookServices.updateBook(book,bid);
+            return ResponseEntity.ok().body(book);
+        } catch (Exception e) {
+            // TODO: handle exception
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+        
+      
     } 
 }
